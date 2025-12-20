@@ -11,7 +11,7 @@ import { AnnouncementBar } from './components/AnnouncementBar';
 import { GitHubSaver } from './components/GitHubSaver'; 
 import { LuckyWheel } from './components/LuckyWheel';
 import { Toast } from './components/Toast';
-import { BusinessData, SocialLinksData, WheelPrize } from './types';
+import { BusinessData, WheelPrize } from './types';
 
 const APP_CONFIG = {
   githubOwner: "omid-aria",
@@ -70,55 +70,57 @@ export default function App() {
     setToast({ message, type, action });
   }, []);
 
-  const loadData = useCallback(async (isBackground = false) => {
-    if (!clientId) return;
-    if (!isBackground) setIsLoading(true);
+  // تابع لود کردن اطلاعات با مدیریت خطای شبکه
+  const loadData = useCallback(async (targetId: string, isBackground = false) => {
+    if (!targetId) return;
     
-    const localMirrorKey = `saffron_mirror_${clientId}`;
+    // ۱. ابتدا تلاش برای خواندن از حافظه گوشی برای سرعت بالا
+    const localMirrorKey = `saffron_mirror_${targetId}`;
     const localMirror = localStorage.getItem(localMirrorKey);
-    
-    if (localMirror && !isBackground) {
+    if (localMirror) {
         try {
             const parsedLocal = JSON.parse(localMirror);
-            setData(prev => ({ ...prev, ...parsedLocal }));
+            setData(parsedLocal);
+            // اگر دیتای محلی داشتیم، لودینگ را زودتر تمام کن
             if (!isBackground) setIsLoading(false);
         } catch(e) {}
     }
 
-    // در ورسل، مسیرها همیشه از روت (/) در نظر گرفته می‌شوند
+    // ۲. تلاش برای دریافت دیتای تازه از گیت‌هاب
     let githubPath = "public/data.json";
-    if (clientId !== APP_CONFIG.defaultClient) githubPath = `public/clients/${clientId}.json`;
+    if (targetId !== APP_CONFIG.defaultClient) githubPath = `public/clients/${targetId}.json`;
     
-    const fetchUrl = `https://raw.githubusercontent.com/${APP_CONFIG.githubOwner}/${APP_CONFIG.githubRepo}/main/${githubPath}?t=${Date.now()}`;
+    const fetchUrl = `https://raw.githubusercontent.com/${APP_CONFIG.githubOwner}/${APP_CONFIG.githubRepo}/main/${githubPath}?v=${Date.now()}`;
 
     try {
-      const response = await fetch(fetchUrl, { cache: 'no-store' });
+      const response = await fetch(fetchUrl, { 
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+      });
 
       if (response.ok) {
         const cloudData = await response.json();
-        const localTsKey = `saffron_last_updated_${clientId}`;
+        const localTsKey = `saffron_last_updated_${targetId}`;
         const localTs = localStorage.getItem(localTsKey);
         
         const cloudTs = cloudData.lastUpdated || 0;
         const shouldUpdate = !localTs || (cloudTs > 0 && parseInt(localTs) < cloudTs);
 
         if (shouldUpdate) {
-           setData(prev => ({ ...prev, ...cloudData }));
+           setData(cloudData);
+           localStorage.setItem(localMirrorKey, JSON.stringify(cloudData));
            if (cloudTs > 0) {
              localStorage.setItem(localTsKey, cloudTs.toString());
-           }
-           if (!isAdmin && localTs) {
-              // Cast window to any to access the custom forceAppUpdate property to satisfy TypeScript
-              if ((window as any).forceAppUpdate) (window as any).forceAppUpdate();
            }
         }
       }
     } catch (e) {
-      console.error("Sync error", e);
+      console.warn("Network fetch failed, using local/fallback data.", e);
+      // اینجا خطای "Failed to fetch" مدیریت می‌شود و برنامه نمی‌شکند
     } finally {
-      if (!isBackground) setIsLoading(false);
+      setIsLoading(false);
     }
-  }, [clientId, isAdmin]);
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -134,18 +136,21 @@ export default function App() {
     }
     setClientId(targetClientId);
 
+    // شروع لود دیتا
+    loadData(targetClientId);
+
     if (params.has('edit') || params.has('admin') || localStorage.getItem('saffron_admin_access') === 'true') {
       setIsAdmin(true);
       setIsEditMode(true);
     }
-  }, []);
+  }, [loadData]);
 
+  // چک کردن آپدیت در پس‌زمینه
   useEffect(() => {
-    if (!clientId) return;
-    loadData();
+    if (!clientId || isEditMode) return;
     const interval = setInterval(() => {
-      if (!isEditMode) loadData(true);
-    }, 60000); 
+      loadData(clientId, true);
+    }, 45000); 
     return () => clearInterval(interval);
   }, [clientId, isEditMode, loadData]);
 
@@ -159,12 +164,7 @@ export default function App() {
     localStorage.removeItem('saffron_admin_access');
     setIsEditMode(false);
     setIsAdmin(false);
-    showToast('تغییرات شما ثبت شد. به دلیل کش سرور، ممکن است اعمال نهایی برای سایرین تا ۱ دقیقه زمان ببرد.', 'success');
-  };
-
-  const getSavePath = () => {
-      if (!clientId || clientId === APP_CONFIG.defaultClient) return 'public/data.json';
-      return `public/clients/${clientId}.json`;
+    showToast('تغییرات شما با موفقیت ثبت و منتشر شد.', 'success');
   };
 
   const handleExitEditMode = () => {
@@ -173,8 +173,20 @@ export default function App() {
     setIsEditMode(false);
   };
 
-  if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center bg-gray-900 text-primary font-bold animate-pulse">در حال بروزرسانی اطلاعات...</div>;
+  // Fix: Definition of getSavePath to resolve line 223 error.
+  const getSavePath = () => {
+    if (clientId === APP_CONFIG.defaultClient) return "public/data.json";
+    return `public/clients/${clientId}.json`;
+  };
+
+  // لودینگ فقط زمانی نمایش داده شود که هیچ دیتایی (حتی قدیمی) نداریم
+  if (isLoading && data.name === fallbackData.name) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#2e102d] text-primary p-10 text-center">
+        <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
+        <p className="text-sm font-bold animate-pulse">در حال فراخوانی...</p>
+      </div>
+    );
   }
 
   return (
@@ -224,7 +236,7 @@ export default function App() {
         <div className="relative z-10 w-full flex flex-col items-center space-y-6 animate-fadeIn pb-10 pt-28">
           {isEditMode && isAdmin && (
             <div className="w-full bg-black/60 border-2 border-primary/60 p-4 rounded-b-2xl mb-4 text-right backdrop-blur-xl z-50 sticky top-16 shadow-2xl">
-               <button onClick={() => setIsSaverOpen(true)} className="w-full bg-primary text-black font-extrabold text-sm py-3 rounded-xl shadow-lg">ثبت و انتشار نهایی</button>
+               <button onClick={() => { setData(d => ({...d, lastUpdated: Date.now()})); setIsSaverOpen(true); }} className="w-full bg-primary text-black font-extrabold text-sm py-3 rounded-xl shadow-lg">ثبت و انتشار نهایی</button>
                <button onClick={() => setIsExitConfirmOpen(true)} className="w-full mt-2 text-white/50 text-[10px]">خروج از ویرایش</button>
             </div>
           )}
