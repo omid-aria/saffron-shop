@@ -31,7 +31,6 @@ export const GitHubSaver: React.FC<GitHubSaverProps> = ({ data, isOpen, onClose,
   }, [isOpen]);
 
   const handleSave = async () => {
-    // حذف فضاهای خالی احتمالی از توکن
     const cleanToken = token.trim();
     
     if (!cleanToken) {
@@ -48,7 +47,6 @@ export const GitHubSaver: React.FC<GitHubSaverProps> = ({ data, isOpen, onClose,
         lastUpdated: Date.now()
       };
 
-      // آدرس API گیت‌هاب
       const url = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${filePath}`;
       
       // ۱. مرحله دریافت اطلاعات فایل موجود برای داشتن SHA
@@ -57,7 +55,7 @@ export const GitHubSaver: React.FC<GitHubSaverProps> = ({ data, isOpen, onClose,
         const getRes = await fetch(url, {
           method: 'GET',
           headers: {
-            'Authorization': `token ${cleanToken}`,
+            'Authorization': `Bearer ${cleanToken}`,
             'Accept': 'application/vnd.github.v3+json',
             'Cache-Control': 'no-cache'
           }
@@ -67,22 +65,16 @@ export const GitHubSaver: React.FC<GitHubSaverProps> = ({ data, isOpen, onClose,
           const fileInfo = await getRes.json();
           sha = fileInfo.sha;
         } else if (getRes.status === 401 || getRes.status === 403) {
-          throw new Error('کد دسترسی (Token) نامعتبر است یا منقضی شده است.');
+          throw new Error('کد دسترسی (Token) نامعتبر است یا دسترسی لازم را ندارد.');
         }
       } catch (getErr: any) {
         if (getErr.message.includes('Failed to fetch')) {
           throw new Error('ارتباط با سرور گیت‌هاب برقرار نشد. احتمالاً نیاز به VPN دارید.');
         }
-        // اگر فایل وجود نداشت (404) مشکلی نیست، بدون SHA ادامه می‌دهیم
-        if (!getErr.message.includes('Token')) {
-           console.log("File might not exist yet, continuing...");
-        } else {
-           throw getErr;
-        }
+        if (getErr.message.includes('Token')) throw getErr;
       }
 
       // ۲. مرحله ارسال و ذخیره دیتای جدید
-      // استفاده از روش ایمن برای تبدیل متن فارسی به Base64
       const jsonStr = JSON.stringify(dataToSave, null, 2);
       const contentBase64 = btoa(encodeURIComponent(jsonStr).replace(/%([0-9A-F]{2})/g, (match, p1) => 
         String.fromCharCode(parseInt(p1, 16))
@@ -91,7 +83,7 @@ export const GitHubSaver: React.FC<GitHubSaverProps> = ({ data, isOpen, onClose,
       const updateRes = await fetch(url, {
         method: 'PUT',
         headers: {
-          'Authorization': `token ${cleanToken}`,
+          'Authorization': `Bearer ${cleanToken}`,
           'Content-Type': 'application/json',
           'Accept': 'application/vnd.github.v3+json'
         },
@@ -104,12 +96,9 @@ export const GitHubSaver: React.FC<GitHubSaverProps> = ({ data, isOpen, onClose,
 
       if (!updateRes.ok) {
         const errData = await updateRes.json();
-        if (updateRes.status === 401) throw new Error('توکن نامعتبر است.');
-        if (updateRes.status === 404) throw new Error('مخزن (Repository) یا فایل پیدا نشد.');
         throw new Error(errData.message || 'خطا در ثبت تغییرات');
       }
 
-      // ذخیره توکن در صورت تمایل کاربر
       if (rememberMe) {
         localStorage.setItem('gh_token', btoa(cleanToken));
       } else {
@@ -194,7 +183,7 @@ export const GitHubSaver: React.FC<GitHubSaverProps> = ({ data, isOpen, onClose,
             </button>
             
             <p className="text-[9px] text-white/20 text-center px-4 leading-relaxed">
-              نکته: برای ذخیره تغییرات، مرورگر شما باید امکان دسترسی به api.github.com را داشته باشد.
+              نکته: در صورت بروز خطای شبکه، حتماً VPN خود را بررسی کنید.
             </p>
           </div>
         )}
