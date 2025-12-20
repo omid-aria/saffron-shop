@@ -15,7 +15,7 @@ import { BusinessData, SocialLinksData, WheelPrize } from './types';
 
 const APP_CONFIG = {
   githubOwner: "omid-aria",
-  githubRepo: "saffron-shop", // نام دقیق مخزن شما در گیت‌هاب
+  githubRepo: "saffron-shop", 
   defaultClient: "demo" 
 };
 
@@ -98,9 +98,17 @@ export default function App() {
         const localTsKey = `saffron_last_updated_${clientId}`;
         const localTs = localStorage.getItem(localTsKey);
         
-        if (!localTs || (cloudData.lastUpdated && parseInt(localTs) < cloudData.lastUpdated)) {
+        const cloudTs = cloudData.lastUpdated || 0;
+        // بررسی هوشمندانه برای آپدیت: اگر لوکال نداریم یا کلود جدیدتر است
+        const shouldUpdate = !localTs || (cloudTs > 0 && parseInt(localTs) < cloudTs);
+
+        if (shouldUpdate) {
            setData(prev => ({ ...prev, ...cloudData }));
-           localStorage.setItem(localTsKey, cloudData.lastUpdated.toString());
+           if (cloudTs > 0) {
+             localStorage.setItem(localTsKey, cloudTs.toString());
+           } else {
+             localStorage.setItem(localTsKey, Date.now().toString());
+           }
            if (!isAdmin && localTs) {
               (window as any).forceAppUpdate();
            }
