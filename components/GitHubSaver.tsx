@@ -31,8 +31,11 @@ export const GitHubSaver: React.FC<GitHubSaverProps> = ({ data, isOpen, onClose,
   }, [isOpen]);
 
   const handleSave = async () => {
-    if (!token.trim()) {
-      setError('لطفاً کد دسترسی را وارد کنید.');
+    // حذف فضاهای خالی احتمالی از توکن
+    const cleanToken = token.trim();
+    
+    if (!cleanToken) {
+      setError('لطفاً کد دسترسی (Token) را وارد کنید.');
       return;
     }
     
@@ -40,41 +43,60 @@ export const GitHubSaver: React.FC<GitHubSaverProps> = ({ data, isOpen, onClose,
     setError('');
 
     try {
-      // اضافه کردن زمان دقیق به دیتا برای شکستن کش در تمام گوشی‌ها
       const dataToSave = {
         ...data,
         lastUpdated: Date.now()
       };
 
+      // آدرس API گیت‌هاب
       const url = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${filePath}`;
       
-      // 1. گرفتن SHA فایل قدیمی
-      const getRes = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'Cache-Control': 'no-cache'
-        }
-      });
-
+      // ۱. مرحله دریافت اطلاعات فایل موجود برای داشتن SHA
       let sha = undefined;
-      if (getRes.ok) {
-        const fileInfo = await getRes.json();
-        sha = fileInfo.sha;
+      try {
+        const getRes = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Authorization': `token ${cleanToken}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Cache-Control': 'no-cache'
+          }
+        });
+
+        if (getRes.ok) {
+          const fileInfo = await getRes.json();
+          sha = fileInfo.sha;
+        } else if (getRes.status === 401 || getRes.status === 403) {
+          throw new Error('کد دسترسی (Token) نامعتبر است یا منقضی شده است.');
+        }
+      } catch (getErr: any) {
+        if (getErr.message.includes('Failed to fetch')) {
+          throw new Error('ارتباط با سرور گیت‌هاب برقرار نشد. احتمالاً نیاز به VPN دارید.');
+        }
+        // اگر فایل وجود نداشت (404) مشکلی نیست، بدون SHA ادامه می‌دهیم
+        if (!getErr.message.includes('Token')) {
+           console.log("File might not exist yet, continuing...");
+        } else {
+           throw getErr;
+        }
       }
 
-      // 2. ارسال دیتای جدید
-      const contentBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(dataToSave, null, 2))));
+      // ۲. مرحله ارسال و ذخیره دیتای جدید
+      // استفاده از روش ایمن برای تبدیل متن فارسی به Base64
+      const jsonStr = JSON.stringify(dataToSave, null, 2);
+      const contentBase64 = btoa(encodeURIComponent(jsonStr).replace(/%([0-9A-F]{2})/g, (match, p1) => 
+        String.fromCharCode(parseInt(p1, 16))
+      ));
 
       const updateRes = await fetch(url, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `token ${cleanToken}`,
           'Content-Type': 'application/json',
           'Accept': 'application/vnd.github.v3+json'
         },
         body: JSON.stringify({
-          message: `Update via Card - ${new Date().toLocaleString()}`,
+          message: `Update via Digital Card - ${new Date().toISOString()}`,
           content: contentBase64,
           sha: sha
         })
@@ -82,11 +104,14 @@ export const GitHubSaver: React.FC<GitHubSaverProps> = ({ data, isOpen, onClose,
 
       if (!updateRes.ok) {
         const errData = await updateRes.json();
-        throw new Error(errData.message || 'خطا در ارتباط با گیت‌هاب');
+        if (updateRes.status === 401) throw new Error('توکن نامعتبر است.');
+        if (updateRes.status === 404) throw new Error('مخزن (Repository) یا فایل پیدا نشد.');
+        throw new Error(errData.message || 'خطا در ثبت تغییرات');
       }
 
+      // ذخیره توکن در صورت تمایل کاربر
       if (rememberMe) {
-        localStorage.setItem('gh_token', btoa(token));
+        localStorage.setItem('gh_token', btoa(cleanToken));
       } else {
         localStorage.removeItem('gh_token');
       }
@@ -99,8 +124,9 @@ export const GitHubSaver: React.FC<GitHubSaverProps> = ({ data, isOpen, onClose,
       }, 1500);
 
     } catch (e: any) {
+      console.error("Save Error:", e);
       setStatus('error');
-      setError(e.message || 'خطا در ذخیره‌سازی');
+      setError(e.message || 'خطای غیرمنتظره در ارتباط با شبکه');
     } finally {
       setLoading(false);
     }
@@ -111,45 +137,65 @@ export const GitHubSaver: React.FC<GitHubSaverProps> = ({ data, isOpen, onClose,
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fadeIn" onClick={onClose}>
       <div className="bg-[#2e102d] border border-primary/50 w-full max-w-sm rounded-3xl p-6 shadow-2xl relative" onClick={e => e.stopPropagation()}>
-        <button onClick={onClose} className="absolute top-4 right-4 text-white/50 hover:text-white"><i className="fas fa-times"></i></button>
+        <button onClick={onClose} className="absolute top-4 right-4 text-white/50 hover:text-white transition-all"><i className="fas fa-times"></i></button>
 
         {status === 'success' ? (
-          <div className="text-center py-8">
+          <div className="text-center py-8 animate-fadeIn">
             <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-500/50">
                 <i className="fas fa-check text-2xl text-green-500"></i>
             </div>
-            <h3 className="text-white font-bold">تغییرات ثبت شد</h3>
-            <p className="text-xs text-gray-400 mt-2">دیتا در حال انتشار در شبکه است...</p>
+            <h3 className="text-white font-bold">تغییرات با موفقیت ثبت شد</h3>
+            <p className="text-[10px] text-gray-400 mt-2">دیتا در مخزن گیت‌هاب شما بروزرسانی شد.</p>
           </div>
         ) : (
           <div className="flex flex-col gap-5">
-            <h3 className="text-primary font-bold text-center text-lg">ثبت نهایی تغییرات</h3>
-            <div className="space-y-2">
-              <input 
-                type="password" 
-                value={token}
-                onChange={e => setToken(e.target.value)}
-                placeholder="کد دسترسی (Token)"
-                dir="ltr"
-                className="w-full bg-black/40 border border-primary/30 rounded-xl px-4 py-3 text-white text-center text-sm focus:border-primary"
-              />
-              <div className="flex items-center justify-center gap-2">
+            <div className="text-center space-y-1">
+               <h3 className="text-primary font-bold text-lg">ثبت نهایی تغییرات</h3>
+               <p className="text-[10px] text-white/40">تغییرات شما در فایل اصلی ذخیره خواهد شد.</p>
+            </div>
+
+            <div className="space-y-3">
+              <div className="relative">
                 <input 
-                  id="rem" type="checkbox" checked={rememberMe} 
-                  onChange={e => setRememberMe(e.target.checked)}
-                  className="rounded bg-black border-primary/30 text-primary"
+                  type="password" 
+                  value={token}
+                  onChange={e => setToken(e.target.value)}
+                  placeholder="کد دسترسی (GitHub Token)"
+                  dir="ltr"
+                  className="w-full bg-black/40 border border-primary/30 rounded-xl px-4 py-4 text-white text-center text-sm focus:border-primary focus:ring-1 focus:ring-primary/30 transition-all outline-none"
                 />
-                <label htmlFor="rem" className="text-[10px] text-gray-400">ذخیره کد در این مرورگر</label>
+              </div>
+              
+              <div className="flex items-center justify-center gap-2 cursor-pointer select-none" onClick={() => setRememberMe(!rememberMe)}>
+                <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${rememberMe ? 'bg-primary border-primary' : 'bg-black/40 border-primary/30'}`}>
+                   {rememberMe && <i className="fas fa-check text-[10px] text-secondary"></i>}
+                </div>
+                <span className="text-[10px] text-gray-400">ذخیره کد دسترسی در این مرورگر</span>
               </div>
             </div>
-            {error && <p className="text-[10px] text-red-400 text-center">{error}</p>}
+
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/30 p-3 rounded-lg animate-shake">
+                <p className="text-[10px] text-red-400 text-center leading-relaxed">{error}</p>
+              </div>
+            )}
+
             <button 
               onClick={handleSave}
               disabled={loading}
-              className="w-full py-4 bg-primary text-black font-bold rounded-xl active:scale-95 transition-all disabled:opacity-50"
+              className="w-full py-4 bg-primary text-black font-black rounded-xl active:scale-95 transition-all disabled:opacity-50 disabled:active:scale-100 shadow-[0_4px_15px_rgba(212,175,55,0.3)]"
             >
-              {loading ? <i className="fas fa-circle-notch fa-spin"></i> : 'تایید و انتشار'}
+              {loading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <i className="fas fa-circle-notch fa-spin"></i>
+                  <span>در حال ذخیره‌سازی...</span>
+                </div>
+              ) : 'تایید و انتشار آنلاین'}
             </button>
+            
+            <p className="text-[9px] text-white/20 text-center px-4 leading-relaxed">
+              نکته: برای ذخیره تغییرات، مرورگر شما باید امکان دسترسی به api.github.com را داشته باشد.
+            </p>
           </div>
         )}
       </div>
