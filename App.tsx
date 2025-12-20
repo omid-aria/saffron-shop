@@ -85,6 +85,7 @@ export default function App() {
         } catch(e) {}
     }
 
+    // در ورسل، مسیرها همیشه از روت (/) در نظر گرفته می‌شوند
     let githubPath = "public/data.json";
     if (clientId !== APP_CONFIG.defaultClient) githubPath = `public/clients/${clientId}.json`;
     
@@ -99,18 +100,16 @@ export default function App() {
         const localTs = localStorage.getItem(localTsKey);
         
         const cloudTs = cloudData.lastUpdated || 0;
-        // بررسی هوشمندانه برای آپدیت: اگر لوکال نداریم یا کلود جدیدتر است
         const shouldUpdate = !localTs || (cloudTs > 0 && parseInt(localTs) < cloudTs);
 
         if (shouldUpdate) {
            setData(prev => ({ ...prev, ...cloudData }));
            if (cloudTs > 0) {
              localStorage.setItem(localTsKey, cloudTs.toString());
-           } else {
-             localStorage.setItem(localTsKey, Date.now().toString());
            }
            if (!isAdmin && localTs) {
-              (window as any).forceAppUpdate();
+              // Cast window to any to access the custom forceAppUpdate property to satisfy TypeScript
+              if ((window as any).forceAppUpdate) (window as any).forceAppUpdate();
            }
         }
       }
@@ -160,7 +159,7 @@ export default function App() {
     localStorage.removeItem('saffron_admin_access');
     setIsEditMode(false);
     setIsAdmin(false);
-    showToast('تغییرات شما فوراً روی این گوشی اعمال شد و تا لحظاتی دیگر برای همه منتشر می‌شود.', 'success');
+    showToast('تغییرات شما ثبت شد. به دلیل کش سرور، ممکن است اعمال نهایی برای سایرین تا ۱ دقیقه زمان ببرد.', 'success');
   };
 
   const getSavePath = () => {
@@ -175,7 +174,7 @@ export default function App() {
   };
 
   if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center bg-gray-900 text-primary font-bold animate-pulse">در حال بروزرسانی...</div>;
+    return <div className="min-h-screen flex items-center justify-center bg-gray-900 text-primary font-bold animate-pulse">در حال بروزرسانی اطلاعات...</div>;
   }
 
   return (
