@@ -5,18 +5,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>کارت ویزیت دیجیتال زعفران</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
     <!-- Fonts & Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
     
-    <style>
-        :root {
-            --primary: #D4AF37;
-            --secondary: #2e102d;
-            --gold-light: #E5C564;
-            --gold-dark: #B89426;
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#D4AF37',
+                        secondary: '#2e102d',
+                        'gold-light': '#E5C564',
+                        'gold-dark': '#B89426',
+                    },
+                    backgroundImage: {
+                        'saffron-gradient': 'linear-gradient(135deg, #2e102d 0%, #1a0819 100%)',
+                    }
+                }
+            }
         }
-        
+    </script>
+
+    <style type="text/css">
         * {
             margin: 0;
             padding: 0;
@@ -29,10 +44,6 @@
             background-color: #0f0f0f;
             color: white;
             overflow-x: hidden;
-        }
-
-        .bg-saffron-gradient {
-            background: linear-gradient(135deg, #2e102d 0%, #1a0819 100%);
         }
 
         .shadow-gold-glow {
@@ -57,6 +68,12 @@
             50% { transform: scale(1.05); opacity: 1; }
         }
         .animate-breathing { animation: breathing 3s ease-in-out infinite; }
+
+        @keyframes slideDown {
+            from { transform: translate(-50%, -100%); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
+        }
+        .animate-slideDown { animation: slideDown 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     </style>
 <script type="importmap">
 {
