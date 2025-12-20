@@ -1,103 +1,77 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Helpdesk & Rewards</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>کارت ویزیت دیجیتال زعفران</title>
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+    
     <style>
         :root {
-            --primary-color: #4e73df;
-            --secondary-color: #858796;
-            --success-color: #1cc88a;
-            --info-color: #36b9cc;
-            --warning-color: #f6c23e;
-            --danger-color: #e74a3b;
-            --dark-color: #5a5c69;
+            --primary: #D4AF37;
+            --secondary: #2e102d;
+            --gold-light: #E5C564;
+            --gold-dark: #B89426;
         }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Vazirmatn', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
         body {
-            background-color: #f8f9fc;
-            font-family: 'Nunito', sans-serif;
-            font-size: 0.9rem;
-        }
-        .sidebar {
-            min-height: 100vh;
-            background: linear-gradient(180deg, #4e73df 10%, #224abe 100%);
+            background-color: #0f0f0f;
             color: white;
+            overflow-x: hidden;
         }
-        .sidebar .nav-link {
-            color: rgba(255,255,255,0.8);
-            font-weight: 600;
+
+        .bg-saffron-gradient {
+            background: linear-gradient(135deg, #2e102d 0%, #1a0819 100%);
         }
-        .sidebar .nav-link:hover {
-            color: white;
+
+        .shadow-gold-glow {
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
         }
-        .sidebar .nav-link.active {
-            color: white;
-            background: rgba(255,255,255,0.1);
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        .card {
-            border: none;
-            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
-            border-radius: 0.75rem;
+        .animate-fadeIn { animation: fadeIn 0.6s ease-out forwards; }
+
+        @keyframes slideInUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
-        .card-header {
-            background-color: #f8f9fc;
-            border-bottom: 1px solid #e3e6f0;
-            font-weight: bold;
-            color: #4e73df;
+        .animate-slideInUp { animation: slideInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+        @keyframes breathing {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; }
         }
-        .points-badge {
-            background: #f6c23e;
-            color: #fff;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-weight: bold;
-        }
-        .ticket-status-open { border-right: 4px solid var(--danger-color); }
-        .ticket-status-progress { border-right: 4px solid var(--primary-color); }
-        .ticket-status-solved { border-right: 4px solid var(--success-color); }
-        .avatar {
-            width: 40px;
-            height: 40px;
-            background: #ddd;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-        #main-content {
-            padding: 2rem;
-        }
-        .login-container {
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+        .animate-breathing { animation: breathing 3s ease-in-out infinite; }
     </style>
 <script type="importmap">
 {
   "imports": {
-    "vite": "https://esm.sh/vite@^7.3.0",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
+    "react": "https://esm.sh/react@^19.2.3",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "chart.js/": "https://esm.sh/chart.js@^4.5.1/"
+    "vite": "https://esm.sh/vite@^7.3.0",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
   }
 }
 </script>
 </head>
 <body>
     <div id="root"></div>
-
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
-    <script type="module" src="index.tsx"></script>
+    <script type="module" src="/index.tsx"></script>
 </body>
 </html>
