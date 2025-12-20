@@ -1,95 +1,103 @@
 
 <!DOCTYPE html>
-<html dir="rtl" lang="fa">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Saffron Shop - Digital Card</title>
-    
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
-
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Helpdesk & Rewards</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
-      #root { background-color: #2e102d; min-height: 100vh; }
-      #root:empty {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      #root:empty::after {
-        content: "";
-        width: 30px;
-        height: 30px;
-        border: 3px solid rgba(212, 175, 55, 0.1);
-        border-top-color: #D4AF37;
-        border-radius: 50%;
-        animation: spin 0.8s linear infinite;
-      }
-      @keyframes spin { to { transform: rotate(360deg); } }
-      body { margin: 0; background-color: #2e102d; font-family: sans-serif; }
-    </style>
-
-    <script>
-      window.forceAppUpdate = function() {
-        if ('caches' in window) {
-          caches.keys().then(function(names) {
-            return Promise.all(names.map(name => caches.delete(name)));
-          }).then(function() {
-            window.location.reload(true);
-          });
-        } else {
-          window.location.reload(true);
+        :root {
+            --primary-color: #4e73df;
+            --secondary-color: #858796;
+            --success-color: #1cc88a;
+            --info-color: #36b9cc;
+            --warning-color: #f6c23e;
+            --danger-color: #e74a3b;
+            --dark-color: #5a5c69;
         }
-      };
-    </script>
-
-    <link rel="manifest" href="./manifest.json" />
-    <meta name="theme-color" content="#2e102d" />
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    
-    <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;800&display=swap" rel="stylesheet" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
-    <script>
-      tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            colors: {
-              primary: "#D4AF37",
-              secondary: "#4a1c40",
-              "gold-light": "#E5C564",
-              "gold-dark": "#B89426",
-            },
-            fontFamily: { sans: ["Vazirmatn", "sans-serif"] },
-            backgroundImage: { "saffron-gradient": "linear-gradient(to bottom, #4a1c40, #2e102d)" },
-            keyframes: {
-              slideDown: { '0%': { transform: 'translate(-50%, -20px)', opacity: '0' }, '100%': { transform: 'translate(-50%, 0)', opacity: '1' } },
-              fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
-              breathing: { '0%, 100%': { opacity: '0.6' }, '50%': { opacity: '1' } }
-            },
-            animation: { slideDown: 'slideDown 0.4s ease-out forwards', fadeIn: 'fadeIn 0.6s ease-out forwards', 'breathing': 'breathing 3s ease-in-out infinite' }
-          },
-        },
-      };
-    </script>
-    <script type="importmap">
+        body {
+            background-color: #f8f9fc;
+            font-family: 'Nunito', sans-serif;
+            font-size: 0.9rem;
+        }
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(180deg, #4e73df 10%, #224abe 100%);
+            color: white;
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            font-weight: 600;
+        }
+        .sidebar .nav-link:hover {
+            color: white;
+        }
+        .sidebar .nav-link.active {
+            color: white;
+            background: rgba(255,255,255,0.1);
+        }
+        .card {
+            border: none;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            border-radius: 0.75rem;
+        }
+        .card-header {
+            background-color: #f8f9fc;
+            border-bottom: 1px solid #e3e6f0;
+            font-weight: bold;
+            color: #4e73df;
+        }
+        .points-badge {
+            background: #f6c23e;
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: bold;
+        }
+        .ticket-status-open { border-right: 4px solid var(--danger-color); }
+        .ticket-status-progress { border-right: 4px solid var(--primary-color); }
+        .ticket-status-solved { border-right: 4px solid var(--success-color); }
+        .avatar {
+            width: 40px;
+            height: 40px;
+            background: #ddd;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #main-content {
+            padding: 2rem;
+        }
+        .login-container {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+<script type="importmap">
 {
   "imports": {
-    "react": "https://esm.sh/react@^18.2.0",
-    "react-dom": "https://esm.sh/react-dom@^18.2.0",
-    "react-dom/": "https://esm.sh/react-dom@^18.2.0/",
-    "react/": "https://esm.sh/react@^18.2.0/",
     "vite": "https://esm.sh/vite@^7.3.0",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "chart.js/": "https://esm.sh/chart.js@^4.5.1/"
   }
 }
 </script>
-  </head>
-  <body class="min-h-screen bg-[#2e102d] text-white antialiased">
+</head>
+<body>
     <div id="root"></div>
-    <script type="module" src="./index.tsx"></script>
-  </body>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
+    <script type="module" src="index.tsx"></script>
+</body>
 </html>
