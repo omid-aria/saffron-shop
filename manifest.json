@@ -1,0 +1,21 @@
+{
+  "short_name": "زعفران هرات",
+  "name": "کارت ویزیت زعفران فروشی هرات",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/744/744546.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/744/744546.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#2e102d",
+  "background_color": "#2e102d",
+  "orientation": "portrait"
+}
