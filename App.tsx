@@ -70,27 +70,27 @@ export default function App() {
     setToast({ message, type, action });
   }, []);
 
-  // تابع لود کردن اطلاعات با مدیریت خطای شبکه
-  const loadData = useCallback(async (targetId: string, isBackground = false) => {
+  const loadData = useCallback(async (targetId: string, force = false) => {
     if (!targetId) return;
     
-    // ۱. ابتدا تلاش برای خواندن از حافظه گوشی برای سرعت بالا
+    // ۱. لود فوری از حافظه برای جلوگیری از صفحه سیاه
     const localMirrorKey = `saffron_mirror_${targetId}`;
     const localMirror = localStorage.getItem(localMirrorKey);
-    if (localMirror) {
+    if (localMirror && !force) {
         try {
-            const parsedLocal = JSON.parse(localMirror);
-            setData(parsedLocal);
-            // اگر دیتای محلی داشتیم، لودینگ را زودتر تمام کن
-            if (!isBackground) setIsLoading(false);
+            const parsed = JSON.parse(localMirror);
+            setData(parsed);
+            setIsLoading(false);
         } catch(e) {}
     }
 
-    // ۲. تلاش برای دریافت دیتای تازه از گیت‌هاب
+    // ۲. دریافت دیتا با شکستن کش CDN
     let githubPath = "public/data.json";
     if (targetId !== APP_CONFIG.defaultClient) githubPath = `public/clients/${targetId}.json`;
     
-    const fetchUrl = `https://raw.githubusercontent.com/${APP_CONFIG.githubOwner}/${APP_CONFIG.githubRepo}/main/${githubPath}?v=${Date.now()}`;
+    // استفاده از timestamp و رندوم برای دور زدن کش گیت‌هاب
+    const cacheBuster = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
+    const fetchUrl = `https://raw.githubusercontent.com/${APP_CONFIG.githubOwner}/${APP_CONFIG.githubRepo}/main/${githubPath}?cb=${cacheBuster}`;
 
     try {
       const response = await fetch(fetchUrl, { 
@@ -100,27 +100,22 @@ export default function App() {
 
       if (response.ok) {
         const cloudData = await response.json();
-        const localTsKey = `saffron_last_updated_${targetId}`;
-        const localTs = localStorage.getItem(localTsKey);
-        
         const cloudTs = cloudData.lastUpdated || 0;
-        const shouldUpdate = !localTs || (cloudTs > 0 && parseInt(localTs) < cloudTs);
+        const currentTs = data.lastUpdated || 0;
 
-        if (shouldUpdate) {
+        // اگر دیتای ابری جدیدتر است یا اولین بار است، آپدیت کن
+        if (cloudTs > currentTs || force || !localMirror) {
            setData(cloudData);
            localStorage.setItem(localMirrorKey, JSON.stringify(cloudData));
-           if (cloudTs > 0) {
-             localStorage.setItem(localTsKey, cloudTs.toString());
-           }
+           localStorage.setItem(`saffron_ts_${targetId}`, cloudTs.toString());
         }
       }
     } catch (e) {
-      console.warn("Network fetch failed, using local/fallback data.", e);
-      // اینجا خطای "Failed to fetch" مدیریت می‌شود و برنامه نمی‌شکند
+      console.warn("Fetch failed, using cached version");
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [data.lastUpdated]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -136,55 +131,41 @@ export default function App() {
     }
     setClientId(targetClientId);
 
-    // شروع لود دیتا
-    loadData(targetClientId);
+    loadData(targetClientId, true);
 
     if (params.has('edit') || params.has('admin') || localStorage.getItem('saffron_admin_access') === 'true') {
       setIsAdmin(true);
       setIsEditMode(true);
     }
-  }, [loadData]);
+  }, []);
 
-  // چک کردن آپدیت در پس‌زمینه
   useEffect(() => {
     if (!clientId || isEditMode) return;
-    const interval = setInterval(() => {
-      loadData(clientId, true);
-    }, 45000); 
+    const interval = setInterval(() => loadData(clientId), 60000); 
     return () => clearInterval(interval);
   }, [clientId, isEditMode, loadData]);
 
   const updateField = (field: keyof BusinessData, value: any) => {
-    setData(prev => ({ ...prev, [field]: value, lastUpdated: Date.now() }));
+    setData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleCloudSaveSuccess = () => {
-    const localMirrorKey = `saffron_mirror_${clientId}`;
-    localStorage.setItem(localMirrorKey, JSON.stringify(data));
-    localStorage.removeItem('saffron_admin_access');
+    loadData(clientId, true); // لود مجدد برای اطمینان
     setIsEditMode(false);
     setIsAdmin(false);
-    showToast('تغییرات شما با موفقیت ثبت و منتشر شد.', 'success');
-  };
-
-  const handleExitEditMode = () => {
     localStorage.removeItem('saffron_admin_access');
-    setIsAdmin(false);
-    setIsEditMode(false);
+    showToast('تغییرات با موفقیت منتشر شد. تا چند لحظه دیگر در تمام دستگاه‌ها بروز می‌شود.', 'success');
   };
 
-  // Fix: Definition of getSavePath to resolve line 223 error.
   const getSavePath = () => {
     if (clientId === APP_CONFIG.defaultClient) return "public/data.json";
     return `public/clients/${clientId}.json`;
   };
 
-  // لودینگ فقط زمانی نمایش داده شود که هیچ دیتایی (حتی قدیمی) نداریم
   if (isLoading && data.name === fallbackData.name) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#2e102d] text-primary p-10 text-center">
-        <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
-        <p className="text-sm font-bold animate-pulse">در حال فراخوانی...</p>
+      <div className="min-h-screen flex items-center justify-center bg-[#2e102d]">
+        <div className="w-10 h-10 border-2 border-primary/20 border-t-primary rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -203,7 +184,7 @@ export default function App() {
             <div className="bg-gradient-to-b from-[#3d1535] to-[#2e102d] border border-primary/40 p-8 rounded-[32px] w-full max-w-xs flex flex-col items-center gap-6 shadow-2xl">
                <h3 className="text-white font-black text-xl">خروج از ویرایش؟</h3>
                <div className="w-full flex flex-col gap-3">
-                  <button onClick={handleExitEditMode} className="w-full py-4 bg-red-600 text-white font-extrabold rounded-2xl">بله، خارج شو</button>
+                  <button onClick={() => { setIsAdmin(false); setIsEditMode(false); localStorage.removeItem('saffron_admin_access'); setIsExitConfirmOpen(false); }} className="w-full py-4 bg-red-600 text-white font-extrabold rounded-2xl">بله، خارج شو</button>
                   <button onClick={() => setIsExitConfirmOpen(false)} className="w-full py-4 bg-white/5 border border-white/10 text-white font-bold rounded-2xl">انصراف</button>
                </div>
             </div>
@@ -236,7 +217,7 @@ export default function App() {
         <div className="relative z-10 w-full flex flex-col items-center space-y-6 animate-fadeIn pb-10 pt-28">
           {isEditMode && isAdmin && (
             <div className="w-full bg-black/60 border-2 border-primary/60 p-4 rounded-b-2xl mb-4 text-right backdrop-blur-xl z-50 sticky top-16 shadow-2xl">
-               <button onClick={() => { setData(d => ({...d, lastUpdated: Date.now()})); setIsSaverOpen(true); }} className="w-full bg-primary text-black font-extrabold text-sm py-3 rounded-xl shadow-lg">ثبت و انتشار نهایی</button>
+               <button onClick={() => setIsSaverOpen(true)} className="w-full bg-primary text-black font-extrabold text-sm py-3 rounded-xl shadow-lg">ثبت و انتشار نهایی</button>
                <button onClick={() => setIsExitConfirmOpen(true)} className="w-full mt-2 text-white/50 text-[10px]">خروج از ویرایش</button>
             </div>
           )}
@@ -250,7 +231,7 @@ export default function App() {
               <ContactInfo phone={data.phone} website={data.website} email={data.email} address={data.address} locationLink={data.locationLink} isEditing={isEditMode && isAdmin} onUpdate={updateField} />
             </CardContainer>
             <SocialLinks links={data.socials} isEditing={isEditMode && isAdmin} onUpdate={(k, v) => {
-              setData(prev => ({ ...prev, lastUpdated: Date.now(), socials: { ...prev.socials, [k]: v } }));
+              setData(prev => ({ ...prev, socials: { ...prev.socials, [k]: v } }));
             }} />
             <BusinessHours hours={data.hours} isEditing={isEditMode && isAdmin} onUpdate={(i, f, v) => {
                 const newHours = [...data.hours];
