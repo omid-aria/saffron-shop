@@ -15,7 +15,7 @@ import { BusinessData, SocialLinksData, WheelPrize } from './types';
 
 const APP_CONFIG = {
   githubOwner: "omid-aria",
-  githubRepo: "saffron-herat", 
+  githubRepo: "saffron-shop", // نام دقیق مخزن شما در گیت‌هاب
   defaultClient: "demo" 
 };
 
@@ -74,7 +74,6 @@ export default function App() {
     if (!clientId) return;
     if (!isBackground) setIsLoading(true);
     
-    // ۱. بررسی حافظه محلی (برای مشاهده لحظه‌ای مدیر)
     const localMirrorKey = `saffron_mirror_${clientId}`;
     const localMirror = localStorage.getItem(localMirrorKey);
     
@@ -83,7 +82,6 @@ export default function App() {
             const parsedLocal = JSON.parse(localMirror);
             setData(prev => ({ ...prev, ...parsedLocal }));
             if (!isBackground) setIsLoading(false);
-            // حتی اگر دیتای محلی داریم، باز هم از سرور چک می‌کنیم که مطمئن شویم
         } catch(e) {}
     }
 
@@ -100,12 +98,9 @@ export default function App() {
         const localTsKey = `saffron_last_updated_${clientId}`;
         const localTs = localStorage.getItem(localTsKey);
         
-        // اگر دیتای ابری جدیدتر از چیزی است که الان داریم نشان می‌دهیم
         if (!localTs || (cloudData.lastUpdated && parseInt(localTs) < cloudData.lastUpdated)) {
            setData(prev => ({ ...prev, ...cloudData }));
            localStorage.setItem(localTsKey, cloudData.lastUpdated.toString());
-           
-           // اگر مشتری است و آپدیت کد (فایل‌های سیستمی) هم احتمالا وجود دارد
            if (!isAdmin && localTs) {
               (window as any).forceAppUpdate();
            }
@@ -152,14 +147,11 @@ export default function App() {
   };
 
   const handleCloudSaveSuccess = () => {
-    // نکته طلایی: ذخیره در آینه محلی مدیر برای مشاهده لحظه‌ای
     const localMirrorKey = `saffron_mirror_${clientId}`;
     localStorage.setItem(localMirrorKey, JSON.stringify(data));
-    
     localStorage.removeItem('saffron_admin_access');
     setIsEditMode(false);
     setIsAdmin(false);
-    
     showToast('تغییرات شما فوراً روی این گوشی اعمال شد و تا لحظاتی دیگر برای همه منتشر می‌شود.', 'success');
   };
 
