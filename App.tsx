@@ -90,12 +90,7 @@ export default function App() {
     
     // استفاده از timestamp و رندوم برای دور زدن کش گیت‌هاب
     const cacheBuster = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
-    const dataPath = targetId === APP_CONFIG.defaultClient 
-  ? "/data.json" 
-  : `/clients/${targetId}.json`;
-  
-const cacheBuster = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
-const fetchUrl = `${dataPath}?cb=${cacheBuster}`;
+    const fetchUrl = `https://raw.githubusercontent.com/${APP_CONFIG.githubOwner}/${APP_CONFIG.githubRepo}/main/${githubPath}?cb=${cacheBuster}`;
 
     try {
       const response = await fetch(fetchUrl, { 
