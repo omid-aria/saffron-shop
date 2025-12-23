@@ -84,13 +84,13 @@ export default function App() {
         } catch(e) {}
     }
 
-    // ۲. دریافت دیتا با شکستن کش CDN
-    let githubPath = "public/data.json";
-    if (targetId !== APP_CONFIG.defaultClient) githubPath = `public/clients/${targetId}.json`;
-    
-    // استفاده از timestamp و رندوم برای دور زدن کش گیت‌هاب
-    const cacheBuster = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
-    const fetchUrl = `https://raw.githubusercontent.com/${APP_CONFIG.githubOwner}/${APP_CONFIG.githubRepo}/main/${githubPath}?cb=${cacheBuster}`;
+    // ۲. دریافت دیتا از Vercel (نه GitHub Raw)
+const dataPath = targetId === APP_CONFIG.defaultClient 
+  ? "/data.json" 
+  : `/clients/${targetId}.json`;
+
+const cacheBuster = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
+const fetchUrl = `${dataPath}?cb=${cacheBuster}`;
 
     try {
       const response = await fetch(fetchUrl, { 
