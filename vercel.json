@@ -14,30 +14,30 @@
           "value": "no-store, no-cache, must-revalidate, max-age=0"
         },
         {
-          "key": "Pragma",
-          "value": "no-cache"
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
+      ]
+    },
+    {
+      "source": "/sw.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
         },
         {
-          "key": "Expires",
-          "value": "0"
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
         }
       ]
     },
     {
-      "source": "/clients/(.*).json",
+      "source": "/manifest.json",
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "no-store, no-cache, must-revalidate, max-age=0"
-        }
-      ]
-    },
-    {
-      "source": "/index.html",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store, no-cache, must-revalidate, max-age=0"
+          "value": "no-cache, no-store, must-revalidate"
         }
       ]
     },
