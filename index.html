@@ -2,97 +2,25 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>کارت ویزیت دیجیتال زعفران</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>کارت ویزیت زعفران</title>
     
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio"></script>
-    
-    <!-- Fonts & Icons -->
+    <!-- فقط چیزای ضروری -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
     
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#2e102d">
-    
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#D4AF37',
-                        secondary: '#2e102d',
-                        'gold-light': '#E5C564',
-                        'gold-dark': '#B89426',
-                    },
-                    backgroundImage: {
-                        'saffron-gradient': 'linear-gradient(135deg, #2e102d 0%, #1a0819 100%)',
-                    }
-                }
-            }
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Vazirmatn', sans-serif; 
+            background: #2e102d; 
+            color: white; 
+            min-height: 100vh; 
         }
-    </script>
-
-    <style type="text/css">
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Vazirmatn', sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body {
-            background-color: #0f0f0f;
-            color: white;
-            overflow-x: hidden;
-        }
-
-        .shadow-gold-glow {
-            box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
-        }
-
-        /* Animations */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fadeIn { animation: fadeIn 0.6s ease-out forwards; }
-
-        @keyframes slideInUp {
-            from { transform: translateY(30px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        .animate-slideInUp { animation: slideInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-
-        @keyframes breathing {
-            0%, 100% { transform: scale(1); opacity: 0.8; }
-            50% { transform: scale(1.05); opacity: 1; }
-        }
-        .animate-breathing { animation: breathing 3s ease-in-out infinite; }
-
-        @keyframes slideDown {
-            from { transform: translate(-50%, -100%); opacity: 0; }
-            to { transform: translate(-50%, 0); opacity: 1; }
-        }
-        .animate-slideDown { animation: slideDown 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     </style>
-
-<script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "vite": "https://esm.sh/vite@^7.3.0",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
-  }
-}
-</script>
 </head>
 <body>
-    <div id="root"></div>
+    <div id="root">Loading...</div>
     <script type="module" src="/index.tsx"></script>
 </body>
 </html>
