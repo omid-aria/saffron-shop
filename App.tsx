@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { CardContainer } from './components/CardContainer';
 import { Header } from './components/Header';
@@ -66,9 +65,50 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [toast, setToast] = useState<{message: string, type: 'success' | 'error' | 'info', action?: { label: string, onClick: () => void }} | null>(null);
 
+  // 🆕 کدهای PWA - این بخش جدید اضافه شده
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallButton, setShowInstallButton] = useState(false);
+
   const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info', action?: { label: string, onClick: () => void }) => {
     setToast({ message, type, action });
   }, []);
+
+  // 🆕 کدهای PWA - این useEffect جدید اضافه شده
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      // جلوگیری از نمایش خودکار مرورگر
+      e.preventDefault();
+      // ذخیره رویداد برای استفاده بعدی
+      setDeferredPrompt(e);
+      // نمایش دکمه نصب
+      setShowInstallButton(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    // بررسی اینکه آیا قبلاً نصب شده
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setShowInstallButton(false);
+    }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  // 🆕 کدهای PWA - این تابع جدید اضافه شده
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    
+    if (outcome === 'accepted') {
+      setShowInstallButton(false);
+    }
+    
+    setDeferredPrompt(null);
+  };
 
   const loadData = useCallback(async (targetId: string, force = false) => {
     if (!targetId) return;
@@ -244,6 +284,16 @@ const fetchUrl = `${dataPath}?cb=${cacheBuster}`;
             <button onClick={() => setIsLoginModalOpen(true)} className="opacity-20 text-[10px] mt-10">مدیریت کارت</button>
           )}
         </div>
+
+        {/* 🆕 کدهای PWA - این دکمه جدید اضافه شده */}
+        {showInstallButton && !isAdmin && (
+          <button 
+            onClick={handleInstallClick}
+            className="fixed bottom-20 left-6 bg-green-600 text-white px-4 py-2 rounded-full shadow-lg z-50 animate-bounce"
+          >
+            نصب برنامه
+          </button>
+        )}
 
         {!isEditMode && data.luckyWheelEnabled && (
           <button onClick={() => setIsLuckyWheelOpen(true)} className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-br from-primary to-gold-dark rounded-full shadow-lg flex items-center justify-center z-50 active:scale-90 transition-all animate-bounce">
