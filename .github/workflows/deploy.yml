@@ -34,10 +34,11 @@ jobs:
         env:
           CI: false
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./dist
+      # این بخش رو حذف کردیم چون deploy-pages خودش artifact رو مدیریت می‌کنه
+      # - name: Upload artifact
+      #   uses: actions/upload-pages-artifact@v3
+      #   with:
+      #     path: ./dist
 
   deploy:
     environment:
@@ -49,3 +50,5 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          artifact_path: ./dist  # این خط رو اضافه کردیم
