@@ -1,8 +1,0 @@
-
-{
-  "name": "Saffron Digital Card",
-  "description": "کارت ویزیت دیجیتال و هوشمند زعفران فروشی هرات",
-  "requestFramePermissions": [
-    "camera"
-  ]
-}
